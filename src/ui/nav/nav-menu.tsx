@@ -11,10 +11,10 @@ const links = [
 		label: name,
 		href: `/category/${slug}`,
 	})),
-	{
-		label: "Digital",
-		href: "/category/digital",
-	},
+	// {
+	// 	label: "Clearance",
+	// 	href: "/category/digital",
+	// },
 ];
 
 export const NavMenu = () => {

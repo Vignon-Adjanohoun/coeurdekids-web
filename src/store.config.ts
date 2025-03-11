@@ -1,21 +1,25 @@
-import AccessoriesImage from "@/images/accessories.jpg";
-import ApparelImage from "@/images/apparel.jpg";
+import BabyImage from "@/images/highlights/baby-cat.jpg";
+import BoyImage from "@/images/highlights/boy-cat.jpg";
+import GirlImage from "@/images/highlights/girl-cat.jpg";
+import teenImage from "@/images/highlights/teen-cat.jpg";
 
 export const config = {
 	categories: [
-		{ name: "Apparel", slug: "apparel", image: ApparelImage },
-		{ name: "Accessories", slug: "accessories", image: AccessoriesImage },
+		{ name: "BABY", slug: "baby", image: BabyImage },
+		{ name: "BOY", slug: "boy", image: BoyImage },
+		{ name: "GIRL", slug: "girl", image: GirlImage },
+		{ name: "TEEN", slug: "teen", image: teenImage },
 	],
 
 	social: {
-		x: "https://x.com/yourstore",
-		facebook: "https://facebook.com/yourstore",
+		instagram: "https://instagram.com/Coeur_de_Kids",
+		tiktok: "https://tiktok.com/Coeur_de_Kids", // TODO: Add TikTok
 	},
 
 	contact: {
-		email: "support@yourstore.com",
-		phone: "+1 (555) 111-4567",
-		address: "123 Store Street, City, Country",
+		email: "contact@coeurdekids.com",
+		phone: "+233 55 487 8272",
+		address: "Adjeikojo Santeo Rd, East legon hills, Accra, Ghana",
 	},
 };
 

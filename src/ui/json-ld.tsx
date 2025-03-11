@@ -1,8 +1,8 @@
 import { formatProductName } from "@/lib/utils";
+import type { Account } from "@/types/models";
 import type * as Commerce from "commerce-kit";
 import { getDecimalFromStripeAmount } from "commerce-kit/currencies";
 import type { ItemList, Product, Thing, WebSite, WithContext } from "schema-dts";
-import type Stripe from "stripe";
 
 export const JsonLd = <T extends Thing>({ jsonLd }: { jsonLd: WithContext<T> }) => {
 	return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
@@ -45,17 +45,17 @@ export const accountToWebsiteJsonLd = ({
 	account,
 	logoUrl,
 }: {
-	account: Stripe.Account | null | undefined;
+	account: Account | null | undefined;
 	logoUrl: string | null | undefined;
 }): WithContext<WebSite> => {
 	return {
 		"@context": "https://schema.org",
 		"@type": "WebSite",
-		name: account?.business_profile?.name ?? "Your Next Store",
-		url: account?.business_profile?.url ?? "https://yournextstore.com",
+		name: account?.name,
+		url: account?.url,
 		mainEntityOfPage: {
 			"@type": "WebPage",
-			url: account?.business_profile?.url ?? "https://yournextstore.com",
+			url: account?.url,
 		},
 		...(logoUrl && {
 			image: {
@@ -65,8 +65,8 @@ export const accountToWebsiteJsonLd = ({
 		}),
 		publisher: {
 			"@type": "Organization",
-			name: account?.business_profile?.name ?? "Your Next Store",
-			url: account?.business_profile?.url ?? "https://yournextstore.com",
+			name: account?.name,
+			url: account?.url,
 		},
 	};
 };

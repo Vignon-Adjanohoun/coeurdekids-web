@@ -3,13 +3,7 @@ import { deslugify } from "@/lib/utils";
 import { YnsLink } from "@/ui/yns-link";
 import Image, { type ImageProps } from "next/image";
 
-export async function CategoryBox({
-	categorySlug,
-	src,
-}: {
-	categorySlug: string;
-	src: ImageProps["src"];
-}) {
+export async function CategoryBox({ categorySlug, src }: { categorySlug: string; src: ImageProps["src"] }) {
 	const t = await getTranslations("Global.actions");
 
 	return (
@@ -22,9 +16,9 @@ export async function CategoryBox({
 					src={src}
 				/>
 			</div>
-			<div className="justify-end gap-2 px-4 py-2 text-neutral-600">
+			<div className="justify-end gap-2 px-4 py-2 text-neutral-600 group-hover:underline">
 				<h3 className="text-lg font-bold tracking-tight">{deslugify(categorySlug)}</h3>
-				<p>{t("shopNow")}</p>
+				<p className="text-sm">{t("explore")}</p>
 			</div>
 		</YnsLink>
 	);
