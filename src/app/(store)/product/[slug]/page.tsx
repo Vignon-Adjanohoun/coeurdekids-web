@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { publicUrl } from "@/env.mjs";
 import { getLocale, getTranslations } from "@/i18n/server";
+import * as Commerce from "@/lib/commerce-lib";
 import { getRecommendedProducts } from "@/lib/search/trieve";
 import { cn, deslugify, formatMoney, formatProductName } from "@/lib/utils";
 import type { TrieveProductMetadata } from "@/scripts/upload-trieve";
@@ -19,7 +20,6 @@ import { Markdown } from "@/ui/markdown";
 import { MainProductImage } from "@/ui/products/main-product-image";
 import { StickyBottom } from "@/ui/sticky-bottom";
 import { YnsLink } from "@/ui/yns-link";
-import * as Commerce from "commerce-kit";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next/types";
@@ -80,7 +80,10 @@ export default async function SingleProductPage(props: {
 			<Breadcrumb>
 				<BreadcrumbList>
 					<BreadcrumbItem>
-						<BreadcrumbLink asChild className="inline-flex min-h-12 min-w-12 items-center justify-center">
+						<BreadcrumbLink
+							asChild
+							className="inline-flex min-h-12 min-w-12 items-center justify-center pl-4 uppercase"
+						>
 							<YnsLink href="/products">{t("allProducts")}</YnsLink>
 						</BreadcrumbLink>
 					</BreadcrumbItem>
@@ -88,7 +91,10 @@ export default async function SingleProductPage(props: {
 						<>
 							<BreadcrumbSeparator />
 							<BreadcrumbItem>
-								<BreadcrumbLink className="inline-flex min-h-12 min-w-12 items-center justify-center" asChild>
+								<BreadcrumbLink
+									className="inline-flex min-h-12 min-w-12 items-center justify-center uppercase"
+									asChild
+								>
 									<YnsLink href={`/category/${category}`}>{deslugify(category)}</YnsLink>
 								</BreadcrumbLink>
 							</BreadcrumbItem>
@@ -98,14 +104,14 @@ export default async function SingleProductPage(props: {
 					<BreadcrumbItem>
 						<BreadcrumbPage>{product.name}</BreadcrumbPage>
 					</BreadcrumbItem>
-					{selectedVariant && (
+					{/* {selectedVariant && (
 						<>
 							<BreadcrumbSeparator />
 							<BreadcrumbItem>
 								<BreadcrumbPage>{deslugify(selectedVariant)}</BreadcrumbPage>
 							</BreadcrumbItem>
 						</>
-					)}
+					)} */}
 				</BreadcrumbList>
 			</Breadcrumb>
 
@@ -169,21 +175,22 @@ export default async function SingleProductPage(props: {
 						</div>
 					</div>
 
-					<div className="grid gap-8 lg:col-span-5">
+					<div className="grid gap-4 lg:col-span-5">
 						<section>
 							<h2 className="sr-only">{t("descriptionTitle")}</h2>
-							<div className="prose text-secondary-foreground">
+							{/* <div className="prose text-secondary-foreground">
 								<Markdown source={product.description || ""} />
-							</div>
+							</div> */}
 						</section>
 
 						{variants.length > 1 && (
 							<div className="grid gap-2">
 								<p className="text-base font-medium" id="variant-label">
-									{t("variantTitle")}
+									<span className="uppercase">{t("colourTitle")}: </span>
+									<span className="">{selectedVariant ? deslugify(selectedVariant) : ""}</span>
 								</p>
 								<ul role="list" className="grid grid-cols-4 gap-2" aria-labelledby="variant-label">
-									{variants.map((variant) => {
+									{variants.map((variant, idx) => {
 										const isSelected = selectedVariant === variant.metadata.variant;
 										return (
 											variant.metadata.variant && (
@@ -193,12 +200,27 @@ export default async function SingleProductPage(props: {
 														prefetch={true}
 														href={`/product/${variant.metadata.slug}?variant=${variant.metadata.variant}`}
 														className={cn(
-															"flex cursor-pointer items-center justify-center gap-2 rounded-md border p-2 transition-colors hover:bg-neutral-100",
+															"flex cursor-pointer items-center justify-center gap-2 rounded-md border transition-colors hover:bg-neutral-100",
 															isSelected && "border-black bg-neutral-50 font-medium",
 														)}
 														aria-selected={isSelected}
 													>
-														{deslugify(variant.metadata.variant)}
+														{variant.images[0] ? (
+															<div className="aspect-auto w-full overflow-hidden bg-neutral-100 rounded-md">
+																<Image
+																	className="group-hover:rotate rounded-md hover-perspective w-full bg-neutral-100 object-cover object-center transition-opacity group-hover:opacity-75"
+																	src={variant.images[0]}
+																	width={200}
+																	height={300}
+																	loading={idx < 3 ? "eager" : "lazy"}
+																	priority={idx < 3}
+																	sizes="(max-width: 1024x) 100vw, (max-width: 1280px) 50vw, 700px"
+																	alt=""
+																/>
+															</div>
+														) : (
+															deslugify(variant.metadata.variant)
+														)}
 													</YnsLink>
 												</li>
 											)

@@ -10,7 +10,7 @@ import Image from "next/image";
 export const Nav = async () => {
 	return (
 		<header className="z-50 py-4 sticky top-0 bg-white/90 backdrop-blur-xs nav-border-reveal">
-			<div className="mx-auto flex items-center gap-2 px-4 flex-row sm:px-6 lg:px-8">
+			<div className="mx-auto flex items-center gap-2 px-4 flex-row">
 				<YnsLink href="/">
 					<SeoH1 className="-mt-0.5 whitespace-nowrap text-xl font-bold">
 						<Image

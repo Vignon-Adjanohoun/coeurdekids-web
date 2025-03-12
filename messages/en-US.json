@@ -50,6 +50,7 @@
 	"/product.page.imagesTitle": "Images",
 	"/product.page.descriptionTitle": "Description",
 	"/product.page.variantTitle": "Variant",
+	"/product.page.colourTitle": "Colour",
 	"/category.metadata.title": "{categoryName} Category · Your Next Store",
 	"/category.page.title": "Category",
 	"/cart.modal.title": "Shopping Cart",

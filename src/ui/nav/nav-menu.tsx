@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const links = [
 	{
-		label: "Home",
+		label: "HOME",
 		href: "/",
 	},
 	...StoreConfig.categories.map(({ name, slug }) => ({

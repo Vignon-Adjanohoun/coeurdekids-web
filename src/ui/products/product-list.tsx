@@ -1,5 +1,6 @@
 import { getLocale } from "@/i18n/server";
 import { formatMoney } from "@/lib/utils";
+import type { Product } from "@/types/models";
 import { JsonLd, mappedProductsToJsonLd } from "@/ui/json-ld";
 import { YnsLink } from "@/ui/yns-link";
 import type * as Commerce from "commerce-kit";
@@ -9,7 +10,7 @@ export const ProductList = async ({
 	products,
 	simple = false,
 }: {
-	products: Commerce.MappedProduct[];
+	products: Product[];
 	simple?: boolean;
 }) => {
 	const locale = await getLocale();
@@ -20,7 +21,11 @@ export const ProductList = async ({
 				{products.map((product, idx) => {
 					return (
 						<li key={product.id} className="group">
-							<YnsLink href={`/product/${product.metadata.slug}`}>
+							<YnsLink
+								href={`/product/${product.metadata.slug}${
+									product.metadata.variant ? `?variant=${product.metadata.variant}` : ""
+								}`}
+							>
 								<article className="overflow-hidden bg-white">
 									{product.images[0] && (
 										<div className="aspect-square w-full overflow-hidden bg-neutral-100">
@@ -38,6 +43,9 @@ export const ProductList = async ({
 									)}
 									{!simple && (
 										<div className="p-2">
+											{product.metadata?.brand && (
+												<h4 className="text-sm font-medium text-neutral-700">{product.metadata?.brand}</h4>
+											)}
 											<h2 className="text-xl font-medium text-neutral-700">{product.name}</h2>
 											<footer className="text-base font-normal text-neutral-900">
 												{product.default_price.unit_amount && (

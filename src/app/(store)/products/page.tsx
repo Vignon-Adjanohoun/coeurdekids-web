@@ -1,7 +1,7 @@
 import { publicUrl } from "@/env.mjs";
 import { getTranslations } from "@/i18n/server";
+import * as Commerce from "@/lib/commerce-lib";
 import { ProductList } from "@/ui/products/product-list";
-import * as Commerce from "commerce-kit";
 import type { Metadata } from "next/types";
 
 export const generateMetadata = async (): Promise<Metadata> => {
@@ -18,7 +18,9 @@ export default async function AllProductsPage() {
 
 	return (
 		<main className="pb-8">
-			<h1 className="text-3xl font-bold leading-none tracking-tight text-foreground">{t("title")}</h1>
+			<h1 className="text-4xl font-bold leading-none tracking-tight text-foreground uppercase py-5 pl-4">
+				{t("title")}
+			</h1>
 			<ProductList products={products} />
 		</main>
 	);
