@@ -11,14 +11,13 @@ import {
 } from "@/components/ui/table";
 import { useTranslations } from "@/i18n/client";
 import { calculateCartTotalPossiblyWithTax, formatMoney, formatProductName } from "@/lib/utils";
+import type { Cart } from "@/types/models";
 import { CartAmountWithSpinner, CartItemLineTotal, CartItemQuantity } from "@/ui/checkout/cart-items.client";
-import { FormatDeliveryEstimate } from "@/ui/checkout/shipping-rates-section";
 import { YnsLink } from "@/ui/yns-link";
-import type * as Commerce from "commerce-kit";
 import Image from "next/image";
 import { useOptimistic } from "react";
 
-export const CartSummaryTable = ({ cart, locale }: { cart: Commerce.Cart; locale: string }) => {
+export const CartSummaryTable = ({ cart, locale }: { cart: Cart; locale: string }) => {
 	const t = useTranslations("/cart.page.summaryTable");
 
 	const [optimisticCart, dispatchOptimisticCartAction] = useOptimistic(
@@ -92,7 +91,7 @@ export const CartSummaryTable = ({ cart, locale }: { cart: Commerce.Cart; locale
 								</TableCell>
 								<TableCell>
 									<CartItemQuantity
-										cartId={cart.cart.id}
+										cartId={cart.id}
 										quantity={line.quantity}
 										productId={line.product.id}
 										onChange={dispatchOptimisticCartAction}
@@ -110,25 +109,6 @@ export const CartSummaryTable = ({ cart, locale }: { cart: Commerce.Cart; locale
 							</TableRow>
 						);
 					})}
-					{cart.shippingRate && (
-						<TableRow>
-							<TableCell className="hidden sm:table-cell sm:w-24"></TableCell>
-							<TableCell className="font-medium" colSpan={3}>
-								{cart.shippingRate.display_name}{" "}
-								<span className="text-muted-foreground">
-									<FormatDeliveryEstimate estimate={cart.shippingRate.delivery_estimate} />
-								</span>
-							</TableCell>
-							<TableCell className="text-right">
-								{cart.shippingRate.fixed_amount &&
-									formatMoney({
-										amount: cart.shippingRate.fixed_amount.amount,
-										currency: cart.shippingRate.fixed_amount.currency,
-										locale,
-									})}
-							</TableCell>
-						</TableRow>
-					)}
 				</TableBody>
 				<TableFooter>
 					{optimisticCart.cart.taxBreakdown.map((tax, idx) => (

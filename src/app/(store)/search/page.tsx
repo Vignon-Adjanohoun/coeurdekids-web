@@ -36,8 +36,8 @@ export default async function SearchPage(props: {
 	const products = await Search.searchProducts(query);
 
 	return (
-		<main>
-			<h1 className="text-3xl font-bold leading-none tracking-tight text-foreground">
+		<main className="pb-8">
+			<h1 className="text-4xl font-bold leading-none tracking-tight text-foreground py-5 pl-4">
 				{t("title", { query })}
 			</h1>
 			{products?.length ? <ProductList products={products} /> : <ProductNotFound query={query} />}

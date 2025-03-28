@@ -5,9 +5,9 @@ import teenImage from "@/images/highlights/teen-cat.jpg";
 
 export const config = {
 	categories: [
-		{ name: "BABY", slug: "baby", image: BabyImage },
-		{ name: "BOY", slug: "boy", image: BoyImage },
 		{ name: "GIRL", slug: "girl", image: GirlImage },
+		{ name: "BOY", slug: "boy", image: BoyImage },
+		{ name: "BABY", slug: "baby", image: BabyImage },
 		{ name: "TEEN", slug: "teen", image: teenImage },
 	],
 

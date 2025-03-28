@@ -1,9 +1,9 @@
 import { getCartFromCookiesAction } from "@/actions/cart-actions";
 import { Button } from "@/components/ui/button";
 import { getLocale, getTranslations } from "@/i18n/server";
+import { calculateCartTotalNetWithoutShipping, cartCount } from "@/lib/commerce-lib";
 import { formatMoney, formatProductName } from "@/lib/utils";
 import { YnsLink } from "@/ui/yns-link";
-import { calculateCartTotalNetWithoutShipping } from "commerce-kit";
 import Image from "next/image";
 import { CartAsideContainer } from "./cart-aside";
 
@@ -20,6 +20,7 @@ export async function CartModalPage() {
 
 	const currency = cart.lines[0]!.product.default_price.currency;
 	const total = calculateCartTotalNetWithoutShipping(cart);
+	const count = cartCount(cart);
 	const t = await getTranslations("/cart.modal");
 	const locale = await getLocale();
 
@@ -27,10 +28,12 @@ export async function CartModalPage() {
 		<CartAsideContainer>
 			<div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
 				<div className="flex items-center justify-between">
-					<h2 className="text-lg font-semibold text-neutral-700">{t("title")}</h2>
-					<YnsLink replace href="/cart" className="text-sm text-muted-foreground underline">
+					<h2 className="text-lg font-semibold text-neutral-700">
+						{t("title")} ({count})
+					</h2>
+					{/* <YnsLink replace href="/cart" className="text-sm text-muted-foreground underline">
 						{t("openFullView")}
-					</YnsLink>
+					</YnsLink> */}
 				</div>
 
 				<div className="mt-8">
@@ -64,16 +67,23 @@ export async function CartModalPage() {
 										locale,
 									})}
 								</p>
-								<p className="self-end text-sm font-medium text-muted-foreground">
-									{t("quantity", { quantity: line.quantity })}
-								</p>
+								<div className="justify-between self-end ">
+									{line.product.metadata.size && (
+										<p className="text-sm font-medium text-muted-foreground">
+											{t("size", { size: line.product.metadata.size })}
+										</p>
+									)}
+									<p className="text-sm font-medium text-muted-foreground">
+										{t("quantity", { quantity: line.quantity })}
+									</p>
+								</div>
 							</li>
 						))}
 					</ul>
 				</div>
 			</div>
 
-			<div className="border-t border-neutral-200 px-4 py-6 sm:px-6">
+			<div className="border-t border-neutral-200 px-4 py-6 sm:px-6 bg-gray-100">
 				<div
 					id="cart-overlay-description"
 					className="flex justify-between text-base font-medium text-neutral-900"
@@ -87,9 +97,9 @@ export async function CartModalPage() {
 						})}
 					</p>
 				</div>
-				<p className="mt-0.5 text-sm text-neutral-500">{t("shippingAndTaxesInfo")}</p>
+				{/* <p className="mt-0.5 text-sm text-neutral-500">{t("shippingAndTaxesInfo")}</p> */}
 				<Button asChild={true} size={"lg"} className="mt-6 w-full rounded-full text-lg">
-					<YnsLink href="/cart">{t("goToPaymentButton")}</YnsLink>
+					<YnsLink href="/cart">{t("goToPlaceOrderButton")}</YnsLink>
 				</Button>
 			</div>
 			{/* {searchParams.add && <CartModalAddSideEffect productId={searchParams.add} />} } */}

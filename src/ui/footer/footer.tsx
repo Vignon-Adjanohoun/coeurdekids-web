@@ -28,7 +28,7 @@ const sections = [
 			},
 			{
 				label: "Contact Us",
-				href: "mailto:hi@yournextstore.com",
+				href: "/contact",
 			},
 		],
 	},

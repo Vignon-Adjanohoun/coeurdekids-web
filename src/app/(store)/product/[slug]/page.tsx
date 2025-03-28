@@ -16,7 +16,6 @@ import { cn, deslugify, formatMoney, formatProductName } from "@/lib/utils";
 import type { TrieveProductMetadata } from "@/scripts/upload-trieve";
 import { AddToCartButton } from "@/ui/add-to-cart-button";
 import { JsonLd, mappedProductToJsonLd } from "@/ui/json-ld";
-import { Markdown } from "@/ui/markdown";
 import { MainProductImage } from "@/ui/products/main-product-image";
 import { StickyBottom } from "@/ui/sticky-bottom";
 import { YnsLink } from "@/ui/yns-link";
@@ -27,7 +26,7 @@ import { Suspense } from "react";
 
 export const generateMetadata = async (props: {
 	params: Promise<{ slug: string }>;
-	searchParams: Promise<{ variant?: string }>;
+	searchParams: Promise<{ variant?: string; size?: string }>;
 }): Promise<Metadata> => {
 	const searchParams = await props.searchParams;
 	const params = await props.params;
@@ -44,6 +43,9 @@ export const generateMetadata = async (props: {
 	if (selectedVariant) {
 		canonical.searchParams.set("variant", selectedVariant);
 	}
+	if (searchParams.size) {
+		canonical.searchParams.set("size", searchParams.size);
+	}
 
 	const productName = formatProductName(product.name, product.metadata.variant);
 
@@ -56,7 +58,7 @@ export const generateMetadata = async (props: {
 
 export default async function SingleProductPage(props: {
 	params: Promise<{ slug: string }>;
-	searchParams: Promise<{ variant?: string; image?: string }>;
+	searchParams: Promise<{ variant?: string; size?: string; image?: string }>;
 }) {
 	const params = await props.params;
 	const searchParams = await props.searchParams;
@@ -74,6 +76,19 @@ export default async function SingleProductPage(props: {
 
 	const category = product.metadata.category;
 	const images = product.images;
+
+	// Find variants with the same color (current color)
+	const sameColorVariants = variants.filter((variant) => variant.metadata.variant === selectedVariant);
+
+	// Extract available sizes for the current color variant
+	const availableSizes = sameColorVariants.map((variant) => variant.metadata.size).filter(Boolean);
+
+	// Get selected size or default to the product's size or first available size
+	const selectedSize = searchParams.size || product.metadata.size || availableSizes[0];
+
+	// Get the correct product for the selected variant and size combination
+	const selectedProduct =
+		sameColorVariants.find((variant) => variant.metadata.size === selectedSize) || product;
 
 	return (
 		<article className="pb-12">
@@ -104,46 +119,38 @@ export default async function SingleProductPage(props: {
 					<BreadcrumbItem>
 						<BreadcrumbPage>{product.name}</BreadcrumbPage>
 					</BreadcrumbItem>
-					{/* {selectedVariant && (
-						<>
-							<BreadcrumbSeparator />
-							<BreadcrumbItem>
-								<BreadcrumbPage>{deslugify(selectedVariant)}</BreadcrumbPage>
-							</BreadcrumbItem>
-						</>
-					)} */}
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<StickyBottom product={product} locale={locale}>
+			<StickyBottom product={selectedProduct} locale={locale}>
 				<div className="mt-4 grid gap-4 lg:grid-cols-12">
 					<div className="lg:col-span-5 lg:col-start-8">
 						<h1 className="text-3xl font-bold leading-none tracking-tight text-foreground">{product.name}</h1>
-						{product.default_price.unit_amount && (
+						{selectedProduct.default_price.unit_amount && (
 							<p className="mt-2 text-2xl font-medium leading-none tracking-tight text-foreground/70">
 								{formatMoney({
-									amount: product.default_price.unit_amount,
-									currency: product.default_price.currency,
+									amount: selectedProduct.default_price.unit_amount,
+									currency: selectedProduct.default_price.currency,
 									locale,
 								})}
 							</p>
 						)}
-						<div className="mt-2">{product.metadata.stock <= 0 && <div>Out of stock</div>}</div>
+						<div className="mt-2">{selectedProduct.metadata.stock <= 0 && <div>Out of stock</div>}</div>
 					</div>
 
 					<div className="lg:col-span-7 lg:row-span-3 lg:row-start-1">
 						<h2 className="sr-only">{t("imagesTitle")}</h2>
 
 						<div className="grid gap-4 lg:grid-cols-3 [&>*:first-child]:col-span-3">
-							{/* {product.metadata.preview && (
-								<ProductModel3D model3d={product.metadata.preview} imageSrc={product.images[0]} />
-							)} */}
 							{images.map((image, idx) => {
 								const params = new URLSearchParams({
 									image: idx.toString(),
 								});
 								if (searchParams.variant) {
 									params.set("variant", searchParams.variant);
+								}
+								if (searchParams.size) {
+									params.set("size", searchParams.size);
 								}
 								return (
 									<YnsLink key={idx} href={`?${params}`} scroll={false}>
@@ -179,10 +186,11 @@ export default async function SingleProductPage(props: {
 						<section>
 							<h2 className="sr-only">{t("descriptionTitle")}</h2>
 							{/* <div className="prose text-secondary-foreground">
-								<Markdown source={product.description || ""} />
-							</div> */}
+                                <Markdown source={product.description || ""} />
+                            </div> */}
 						</section>
 
+						{/* Color variants selection */}
 						{variants.length > 1 && (
 							<div className="grid gap-2">
 								<p className="text-base font-medium" id="variant-label">
@@ -190,26 +198,33 @@ export default async function SingleProductPage(props: {
 									<span className="">{selectedVariant ? deslugify(selectedVariant) : ""}</span>
 								</p>
 								<ul role="list" className="grid grid-cols-4 gap-2" aria-labelledby="variant-label">
-									{variants.map((variant, idx) => {
-										const isSelected = selectedVariant === variant.metadata.variant;
-										return (
-											variant.metadata.variant && (
-												<li key={variant.id}>
+									{/* Get unique color variants */}
+									{[...new Set(variants.map((variant) => variant.metadata.variant))]
+										.filter(Boolean)
+										.map((variantColor, idx) => {
+											const variantProduct = variants.find((v) => v.metadata.variant === variantColor);
+											if (!variantProduct) return null;
+
+											const isSelected = selectedVariant === variantColor;
+											return (
+												<li key={variantProduct.id}>
 													<YnsLink
 														scroll={false}
 														prefetch={true}
-														href={`/product/${variant.metadata.slug}?variant=${variant.metadata.variant}`}
+														href={`/product/${variantProduct.metadata.slug}?variant=${variantColor}${
+															selectedSize ? `&size=${selectedSize}` : ""
+														}`}
 														className={cn(
 															"flex cursor-pointer items-center justify-center gap-2 rounded-md border transition-colors hover:bg-neutral-100",
 															isSelected && "border-black bg-neutral-50 font-medium",
 														)}
 														aria-selected={isSelected}
 													>
-														{variant.images[0] ? (
+														{variantProduct.images[0] ? (
 															<div className="aspect-auto w-full overflow-hidden bg-neutral-100 rounded-md">
 																<Image
 																	className="group-hover:rotate rounded-md hover-perspective w-full bg-neutral-100 object-cover object-center transition-opacity group-hover:opacity-75"
-																	src={variant.images[0]}
+																	src={variantProduct.images[0]}
 																	width={200}
 																	height={300}
 																	loading={idx < 3 ? "eager" : "lazy"}
@@ -219,31 +234,69 @@ export default async function SingleProductPage(props: {
 																/>
 															</div>
 														) : (
-															deslugify(variant.metadata.variant)
+															deslugify(variantColor)
 														)}
 													</YnsLink>
 												</li>
-											)
+											);
+										})}
+								</ul>
+							</div>
+						)}
+
+						{/* Size selection */}
+						{availableSizes.length > 0 && (
+							<div className="grid gap-2 mt-4">
+								<p className="text-base font-medium" id="size-label">
+									<span className="uppercase">{t("sizeTitle") || "Size"}: </span>
+									<span className="">{selectedSize || ""}</span>
+								</p>
+								<ul role="list" className="grid grid-cols-4 gap-2" aria-labelledby="size-label">
+									{availableSizes.map((size) => {
+										if (!size) return null;
+										const isSelected = selectedSize === size;
+										const sizeVariant = sameColorVariants.find((variant) => variant.metadata.size === size);
+										const isOutOfStock = sizeVariant && sizeVariant.metadata.stock <= 0;
+
+										return (
+											<li key={size}>
+												<YnsLink
+													scroll={false}
+													prefetch={true}
+													href={`/product/${product.metadata.slug}?variant=${selectedVariant}&size=${size}`}
+													className={cn(
+														"flex h-10 cursor-pointer items-center justify-center rounded-md border transition-colors",
+														isSelected ? "border-black bg-neutral-50 font-medium" : "hover:bg-neutral-100",
+														isOutOfStock && "opacity-50 cursor-not-allowed",
+													)}
+													aria-selected={isSelected}
+													aria-disabled={isOutOfStock}
+													onClick={isOutOfStock ? (e) => e.preventDefault() : undefined}
+												>
+													{size}
+													{isOutOfStock && <span className="ml-1 text-xs">(Out of stock)</span>}
+												</YnsLink>
+											</li>
 										);
 									})}
 								</ul>
 							</div>
 						)}
 
-						<AddToCartButton productId={product.id} disabled={product.metadata.stock <= 0} />
+						<AddToCartButton productId={selectedProduct.id} disabled={selectedProduct.metadata.stock <= 0} />
 					</div>
 				</div>
 			</StickyBottom>
 
 			<Suspense>
-				<SimilarProducts id={product.id} />
+				<SimilarProducts id={selectedProduct.id} />
 			</Suspense>
 
 			<Suspense>
 				<ProductImageModal images={images} />
 			</Suspense>
 
-			<JsonLd jsonLd={mappedProductToJsonLd(product)} />
+			<JsonLd jsonLd={mappedProductToJsonLd(selectedProduct)} />
 		</article>
 	);
 }

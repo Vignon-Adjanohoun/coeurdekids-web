@@ -1,4 +1,4 @@
-import * as Commerce from "commerce-kit";
+import * as Commerce from "@/lib/commerce-lib";
 import { unstable_cache } from "next/cache";
 import { simpleSearch } from "./simplesearch";
 

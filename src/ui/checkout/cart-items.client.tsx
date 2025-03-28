@@ -1,7 +1,6 @@
 import { setQuantity } from "@/actions/cart-actions";
 import { Button } from "@/components/ui/button";
 import { formatMoney } from "@/lib/utils";
-import { useElements } from "@stripe/react-stripe-js";
 import clsx from "clsx";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -28,7 +27,6 @@ export const CartItemQuantity = ({
 
 	const isPending = pending && stateRef.current !== null;
 
-	const elements = useElements();
 	const router = useRouter();
 
 	const formAction = async (action: "INCREASE" | "DECREASE") => {
@@ -38,7 +36,6 @@ export const CartItemQuantity = ({
 			try {
 				const modifier = action === "INCREASE" ? 1 : -1;
 				await setQuantity({ cartId, productId, quantity: quantity + modifier });
-				await elements?.fetchUpdates();
 				router.refresh();
 				stateRef.current?.promise.resolve();
 			} catch (error) {
@@ -133,7 +130,11 @@ export const CartAmountWithSpinner = ({
 	total,
 	currency,
 	locale,
-}: { total: number; currency: string; locale: string }) => {
+}: {
+	total: number;
+	currency: string;
+	locale: string;
+}) => {
 	const { pending } = useFormStatus();
 
 	return (

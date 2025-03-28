@@ -1,7 +1,9 @@
 "use server";
 
 import { clearCartCookie, getCartCookieJson, setCartCookieJson } from "@/lib/cart";
-import * as Commerce from "commerce-kit";
+import * as Commerce from "@/lib/commerce-lib";
+import type { Cart } from "@/types/models";
+import type { AddressSchema } from "@/ui/checkout/checkout-form-schema";
 import { revalidateTag } from "next/cache";
 
 export async function getCartFromCookiesAction() {
@@ -61,12 +63,12 @@ export async function addToCartAction(formData: FormData) {
 
 	const cart = await getCartFromCookiesAction();
 
-	const updatedCart = await Commerce.cartAdd({ productId, cartId: cart?.cart.id });
+	const updatedCart = await Commerce.cartAdd({ productId, cartId: cart?.id });
 
 	if (updatedCart) {
 		await setCartCookieJson({
 			id: updatedCart.id,
-			linesCount: Commerce.cartCount(updatedCart.metadata),
+			linesCount: Commerce.cartCount(updatedCart),
 		});
 
 		revalidateTag(`cart-${updatedCart.id}`);
@@ -81,7 +83,7 @@ export async function increaseQuantity(productId: string) {
 	}
 	await Commerce.cartChangeQuantity({
 		productId,
-		cartId: cart.cart.id,
+		cartId: cart.id,
 		operation: "INCREASE",
 	});
 }
@@ -93,7 +95,7 @@ export async function decreaseQuantity(productId: string) {
 	}
 	await Commerce.cartChangeQuantity({
 		productId,
-		cartId: cart.cart.id,
+		cartId: cart.id,
 		operation: "DECREASE",
 	});
 }
@@ -118,5 +120,48 @@ export async function commerceGPTRevalidateAction() {
 	const cart = await getCartCookieJson();
 	if (cart) {
 		revalidateTag(`cart-${cart.id}`);
+	}
+}
+
+export async function saveShippingAddressAction({
+	cartId,
+	shippingAddress,
+}: {
+	cartId: string;
+	shippingAddress: AddressSchema;
+}): Promise<Cart | null> {
+	if (!cartId) {
+		throw new Error("No cart ID provided");
+	}
+
+	try {
+		// Update the cart with the shipping address
+		// You'd need to implement or modify this method in your Commerce library
+		const cart = await Commerce.cartSaveShippingAddress({
+			cartId,
+			shippingAddress: {
+				name: shippingAddress.name,
+				email: shippingAddress.email,
+				phone: shippingAddress.phone || undefined,
+				city: shippingAddress.city,
+				country: shippingAddress.country,
+				line1: shippingAddress.line1,
+				line2: shippingAddress.line2 || undefined,
+				postalCode: shippingAddress.postalCode || undefined,
+				state: shippingAddress.state || undefined,
+			},
+		});
+
+		// Revalidate the cart data
+		revalidateTag(`cart-${cartId}`);
+
+		if (!cart) {
+			throw new Error("Failed to save shipping address");
+		}
+
+		return cart;
+	} catch (error) {
+		console.error("Error saving shipping address:", error);
+		throw new Error("Failed to save shipping address");
 	}
 }

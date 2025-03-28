@@ -34,14 +34,14 @@ export const ElWithErrors = ({
 	return (
 		<Label>
 			<span>{label}</span>
+			{child}
 			<span id={id} aria-live="assertive">
 				{currentErrors?.map((error) => (
-					<span key={error} className="ml-2 text-xs leading-none text-destructive">
+					<span key={error} className="text-xs leading-none text-destructive">
 						{error}
 					</span>
 				))}
 			</span>
-			{child}
 		</Label>
 	);
 };

@@ -43,7 +43,13 @@ export const AddToCartButton = ({
 			}}
 			aria-disabled={isDisabled}
 		>
-			<span className={cn("transition-opacity ease-in", pending ? "opacity-0" : "opacity-100")}>
+			<span
+				className={cn(
+					"transition-opacity ease-in",
+					pending ? "opacity-0" : "opacity-100",
+					disabled ? "" : "cursor-pointer",
+				)}
+			>
 				{disabled ? t("disabled") : t("actionButton")}
 			</span>
 			<span

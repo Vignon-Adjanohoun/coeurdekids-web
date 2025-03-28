@@ -1,4 +1,4 @@
-import type * as Commerce from "commerce-kit";
+import type { Product } from "@/types/models";
 
 const NO_MATCH = 0;
 const EXACT_MATCH = 5;
@@ -26,7 +26,7 @@ function simpleSearchMatch(query: string, value: null | undefined | string): num
 	return (EXACT_WORD_MULTIPLIER * exactWordOccurrences + includesOccurrences) / allWords;
 }
 
-export function simpleSearch(products: Commerce.MappedProduct[], query: string) {
+export function simpleSearch(products: Product[], query: string) {
 	const escapedQuery = escapeRegExp(query);
 	const matches = products
 		.flatMap((product) => {
@@ -36,6 +36,8 @@ export function simpleSearch(products: Commerce.MappedProduct[], query: string) 
 				[product.metadata.slug, 1],
 				[product.metadata.category, 1],
 				[product.metadata.variant, 1],
+				[product.metadata.brand, 1],
+				[product.metadata.size, 1],
 			] as const;
 
 			const score = fieldsWithWeights
