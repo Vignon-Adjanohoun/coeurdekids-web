@@ -18,26 +18,6 @@ export interface Account {
 }
 
 export interface Product {
-	default_price: {
-		unit_amount: number;
-		id: string;
-		currency: string;
-		product: string;
-		type: string;
-		object: string;
-	};
-	marketing_features: string[];
-	metadata: {
-		slug: string;
-		stock: number;
-		category?: string;
-		order?: number;
-		variant?: string;
-		size?: string;
-		digitalAsset?: string;
-		preview?: string;
-		brand?: string;
-	};
 	id: string;
 	object: string;
 	active: boolean;
@@ -47,14 +27,28 @@ export interface Product {
 	images: Array<string>;
 	livemode: boolean;
 	name: string;
-	package_dimensions: null;
-	shippable: boolean | null;
-	statement_descriptor: string | null;
-	tax_code: string | null;
-	type: string;
-	unit_label: string | null;
 	updated: number;
-	url: string | null;
+	marketing_features: string[];
+	default_price: {
+		unit_amount: number;
+		id: string;
+		currency: string;
+		product: string;
+		type: string;
+		object: string;
+	};
+	metadata: {
+		slug: string;
+		stock: number;
+		category?: string;
+		categories?: string[];
+		order?: number;
+		variant?: string;
+		size?: string;
+		digitalAsset?: string;
+		preview?: string;
+		brand?: string;
+	};
 }
 
 export interface User {

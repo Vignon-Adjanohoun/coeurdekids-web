@@ -152,5 +152,23 @@
 	"/order.page.printReceipt": "Print Receipt",
 	"/order.page.orderConfirmed": "Your order has been confirmed",
 	"/order.page.thankYou": "Thank you for your purchase!",
-	"/order.page.emailConfirmation": "An email confirmation has been sent to"
+	"/order.page.emailConfirmation": "An email confirmation has been sent to",
+
+	"/contact.metadata.title": "Contact Us · Coeur de Kids",
+	"/contact.metadata.description": "Get in touch with Coeur de Kids. We'd love to hear from you!",
+
+	"/contact.page.title": "Contact Us",
+	"/contact.page.aboutTitle": "About Coeur de Kids",
+	"/contact.page.aboutDescription": "At Coeur de Kids, we combine luxury children's fashion with a commitment to healthy living. Our curated collection features high-quality, stylish clothing that lets children express themselves while ensuring comfort and durability. Founded with a passion for both fashion and wellbeing, we're more than just a clothing store - we're a lifestyle brand for modern families.",
+	"/contact.page.contactInfoTitle": "How To Reach Us",
+	"/contact.page.socialTitle": "Follow Us",
+	"/contact.page.storeHours": "Store Hours",
+	"/contact.page.getInTouchTitle": "Send Us a Message",
+	"/contact.page.nameLabel": "Name",
+	"/contact.page.emailLabel": "Email",
+	"/contact.page.subjectLabel": "Subject",
+	"/contact.page.messageLabel": "Message",
+	"/contact.page.sendButton": "Send Message",
+	"/contact.page.formSuccess": "Thank you for your message. We will get back to you soon.",
+	"/contact.page.formError": "There was an error sending your message. Please try again."
 }

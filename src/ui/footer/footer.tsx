@@ -19,14 +19,6 @@ const sections = [
 		header: "Support",
 		links: [
 			{
-				label: "Features",
-				href: "https://yournextstore.com/#features",
-			},
-			{
-				label: "Pricing",
-				href: "https://yournextstore.com/#pricing",
-			},
-			{
 				label: "Contact Us",
 				href: "/contact",
 			},

@@ -17,7 +17,7 @@ export const accountGet = async (): Promise<{
 			email: "contact@coeurdekids.com",
 			phone: "+233554878272",
 			address: {
-				street: "Adjeikojo Santeo Rd, East legon hills",
+				street: "Bridge Ave, East legon hills",
 				city: "Accra",
 				state: "Greater Accra",
 				postalCode: "",
@@ -62,7 +62,7 @@ export const productBrowse = async (
 			metadata: {
 				slug: "kids-tshirt",
 				stock: 25,
-				category: "baby",
+				category: "girl",
 				order: 1,
 				brand: "H&M",
 				variant: "white",
@@ -102,7 +102,7 @@ export const productBrowse = async (
 			metadata: {
 				slug: "kids-tshirt",
 				stock: 15,
-				category: "baby",
+				category: "girl",
 				order: 2,
 				brand: "NEXT",
 				variant: "red",
@@ -141,7 +141,7 @@ export const productBrowse = async (
 			metadata: {
 				slug: "kids-tshirt",
 				stock: 10,
-				category: "baby",
+				category: "girl",
 				order: 3,
 				variant: "blue",
 				size: "5M",
@@ -178,7 +178,7 @@ export const productBrowse = async (
 			metadata: {
 				slug: "kids-tshirt",
 				stock: 8,
-				category: "baby",
+				category: "girl",
 				order: 4,
 				brand: "Carter's",
 				variant: "blue",
@@ -216,7 +216,7 @@ export const productBrowse = async (
 			metadata: {
 				slug: "kids-hat",
 				stock: 20,
-				category: "baby",
+				category: "girl",
 				order: 5,
 			},
 			package_dimensions: null,
@@ -607,268 +607,13 @@ export const cartSaveShippingAddress = async ({
 	return cart;
 };
 
-// Mock shipping rates
-export const shippingBrowse = async (): Promise<Stripe.ShippingRate[]> => {
-	return [
-		{
-			id: "shr_standard",
-			object: "shipping_rate",
-			active: true,
-			created: Date.now() / 1000,
-			display_name: "Standard Shipping",
-			fixed_amount: {
-				amount: 500,
-				currency: "ghs",
-			},
-			livemode: false,
-			metadata: {},
-			tax_behavior: "exclusive",
-			tax_code: null,
-			type: "fixed_amount",
-			delivery_estimate: {
-				minimum: {
-					unit: "business_day",
-					value: 3,
-				},
-				maximum: {
-					unit: "business_day",
-					value: 5,
-				},
-			},
-		},
-		{
-			id: "shr_express",
-			object: "shipping_rate",
-			active: true,
-			created: Date.now() / 1000,
-			display_name: "Express Shipping",
-			fixed_amount: {
-				amount: 1000,
-				currency: "ghs",
-			},
-			livemode: false,
-			metadata: {},
-			tax_behavior: "exclusive",
-			tax_code: null,
-			type: "fixed_amount",
-			delivery_estimate: {
-				minimum: {
-					unit: "business_day",
-					value: 1,
-				},
-				maximum: {
-					unit: "business_day",
-					value: 2,
-				},
-			},
-		},
-	] as Stripe.ShippingRate[];
-};
-
-// Mock shipping rate by ID
-export const shippingGet = async (id: string): Promise<Stripe.ShippingRate | null> => {
-	const rates = await shippingBrowse();
-	return rates.find((rate) => rate.id === id) || null;
-};
-
 // Mock category list
 export const categoryBrowse = async (): Promise<string[]> => {
-	return ["tops", "bottoms", "footwear", "outerwear", "accessories"];
-};
-
-// Mock order data
-export const orderGet = async (orderId: string) => {
-	// Check if this is a cart that's been "completed"
-	if (mockCarts.has(orderId)) {
-		const cart = mockCarts.get(orderId);
-		return {
-			order: {
-				...cart.cart,
-				status: "succeeded",
-				payment_method: {
-					id: "pm_123456",
-					object: "payment_method",
-					type: "card",
-					card: {
-						brand: "visa",
-						display_brand: "Visa",
-						exp_month: 12,
-						exp_year: 2025,
-						last4: "4242",
-					},
-					billing_details: {
-						address: {
-							city: "Paris",
-							country: "FR",
-							line1: "123 Main St",
-							line2: null,
-							postal_code: "75000",
-							state: null,
-						},
-						email: "customer@example.com",
-						name: "Customer Name",
-						phone: "+3312345678",
-					},
-				},
-				latest_charge: {
-					id: "ch_123456",
-					object: "charge",
-					amount: cart.cart.amount,
-					created: Date.now() / 1000,
-					currency: "ghs",
-					status: "succeeded",
-				},
-				taxBreakdown: [],
-				receipt_email: "customer@example.com",
-			},
-			lines: cart.lines,
-			shippingRate: cart.shippingRate,
-		};
-	}
-
-	// Mock a standard order if not found in carts
-	return {
-		order: {
-			id: orderId,
-			object: "payment_intent",
-			status: "succeeded",
-			amount: 5998,
-			amount_capturable: 0,
-			amount_received: 5998,
-			currency: "ghs",
-			created: Date.now() / 1000 - 86400, // 1 day ago
-			client_secret: null,
-			metadata: {
-				shippingRateId: "shr_standard",
-				taxId: "123456789",
-			},
-			payment_method: {
-				id: "pm_123456",
-				object: "payment_method",
-				type: "card",
-				card: {
-					brand: "visa",
-					display_brand: "Visa",
-					exp_month: 12,
-					exp_year: 2025,
-					last4: "4242",
-				},
-				billing_details: {
-					address: {
-						city: "Paris",
-						country: "FR",
-						line1: "123 Main St",
-						line2: null,
-						postal_code: "75000",
-						state: null,
-					},
-					email: "customer@example.com",
-					name: "Customer Name",
-					phone: "+3312345678",
-				},
-			},
-			latest_charge: {
-				id: "ch_123456",
-				object: "charge",
-				amount: 5998,
-				created: Date.now() / 1000 - 86400,
-				currency: "ghs",
-				status: "succeeded",
-			},
-			receipt_email: "customer@example.com",
-			shipping: {
-				name: "Customer Name",
-				address: {
-					city: "Paris",
-					country: "FR",
-					line1: "123 Main St",
-					line2: null,
-					postal_code: "75000",
-					state: null,
-				},
-				phone: "+3312345678",
-			},
-			taxBreakdown: [],
-			livemode: false,
-			capture_method: "automatic",
-			confirmation_method: "automatic",
-			application: null,
-			application_fee_amount: null,
-			automatic_payment_methods: null,
-			canceled_at: null,
-			cancellation_reason: null,
-			description: null,
-			invoice: null,
-			last_payment_error: null,
-			next_action: null,
-			on_behalf_of: null,
-			payment_method_configuration_details: null,
-			payment_method_options: null,
-			payment_method_types: ["card"],
-			processing: null,
-			review: null,
-			setup_future_usage: null,
-			source: null,
-			statement_descriptor: null,
-			statement_descriptor_suffix: null,
-			transfer_data: null,
-			transfer_group: null,
-			customer: null,
-		},
-		lines: [
-			{
-				product: (await productGetById("prod-1"))!,
-				quantity: 2,
-			},
-			{
-				product: (await productGetById("prod-2"))!,
-				quantity: 1,
-			},
-		],
-		shippingRate: await shippingGet("shr_standard"),
-	};
-};
-
-// Helper function to get products from cart metadata
-export const getProductsFromCart = (metadata) => {
-	const result = [];
-
-	if (!metadata) return result;
-
-	for (const [key, value] of Object.entries(metadata)) {
-		if (key.startsWith("product_") && key.endsWith("_quantity")) {
-			const productId = key.replace("product_", "").replace("_quantity", "");
-			const quantity = parseInt(value, 10);
-
-			if (!isNaN(quantity) && quantity > 0) {
-				result.push([productId, quantity]);
-			}
-		}
-	}
-
-	return result;
-};
-
-// Helper function to get products from metadata
-export const getProductsFromMetadata = async (metadata) => {
-	const productQuantities = getProductsFromCart(metadata);
-	const result = [];
-
-	for (const [productId, quantity] of productQuantities) {
-		const product = await productGetById(productId);
-		result.push({ product, quantity });
-	}
-
-	return result;
-};
-
-// Helper function to get cart with products by ID
-export const getCartWithProductsById = async (cartId) => {
-	return await cartGet(cartId);
+	return ["baby", "girl", "boy", "shoes", "teen", "accessories", "tops", "bottoms", "dress"];
 };
 
 // Calculate cart total with possible tax
-export const calculateCartTotalPossiblyWithTax = (cart) => {
+export const calculateCartTotalPossiblyWithTax = (cart: Cart) => {
 	if (!cart) return 0;
 
 	if (cart.cart.metadata?.taxCalculationId) {
@@ -879,7 +624,7 @@ export const calculateCartTotalPossiblyWithTax = (cart) => {
 };
 
 // Calculate cart total without shipping
-export const calculateCartTotalNetWithoutShipping = (cart) => {
+export const calculateCartTotalNetWithoutShipping = (cart: Cart) => {
 	if (!cart) return 0;
 
 	return cart.lines.reduce(
@@ -889,7 +634,7 @@ export const calculateCartTotalNetWithoutShipping = (cart) => {
 };
 
 // Calculate cart total with shipping
-export const calculateCartTotalNet = (cart) => {
+export const calculateCartTotalNet = (cart: Cart) => {
 	if (!cart) return 0;
 
 	let total = calculateCartTotalNetWithoutShipping(cart);
@@ -899,115 +644,4 @@ export const calculateCartTotalNet = (cart) => {
 	}
 
 	return total;
-};
-
-// Address schema creation
-export const getAddressSchema = (tr) => {
-	// Since we're mocking, we'll return a simple validator function
-	return {
-		safeParse: (data) => {
-			const required = ["name", "city", "country", "line1", "postalCode"];
-			const missing = required.filter((field) => !data[field]);
-
-			if (missing.length > 0) {
-				return {
-					success: false,
-					error: {
-						flatten: () => ({
-							fieldErrors: missing.reduce((acc, field) => {
-								acc[field] = [tr[`${field}Required`]];
-								return acc;
-							}, {}),
-						}),
-					},
-				};
-			}
-
-			return {
-				success: true,
-				data,
-			};
-		},
-	};
-};
-
-// Update payment intent
-export const updatePaymentIntent = async ({
-	paymentIntentId,
-	data,
-	customerOverride,
-	clearTaxCalculation,
-}) => {
-	const cart = mockCarts.get(paymentIntentId);
-
-	if (!cart) throw new Error("Payment intent not found");
-
-	// Update the cart with new data
-	cart.cart = {
-		...cart.cart,
-		...data,
-	};
-
-	if (customerOverride) {
-		cart.cart.customer = customerOverride;
-	}
-
-	// Clear tax calculation if needed
-	if (clearTaxCalculation && cart.cart.metadata) {
-		delete cart.cart.metadata.taxCalculationId;
-		delete cart.cart.metadata.taxCalculationExp;
-	}
-
-	mockCarts.set(paymentIntentId, cart);
-
-	return cart.cart;
-};
-
-// Cart save email
-export const cartSaveEmail = async ({ cartId, email }) => {
-	const cart = mockCarts.get(cartId);
-
-	if (!cart) return undefined;
-
-	cart.cart.receipt_email = email;
-
-	mockCarts.set(cartId, cart);
-
-	return cart.cart;
-};
-
-// Cart save tax ID
-export const cartSaveTax = async ({ cartId, taxId }) => {
-	const cart = mockCarts.get(cartId);
-
-	if (!cart) return undefined;
-
-	if (!cart.cart.metadata) cart.cart.metadata = {};
-	cart.cart.metadata.taxId = taxId;
-
-	mockCarts.set(cartId, cart);
-
-	return cart.cart;
-};
-
-// Cart save shipping
-export const cartSaveShipping = async ({ cartId, shippingRateId }) => {
-	const cart = mockCarts.get(cartId);
-
-	if (!cart) return undefined;
-
-	const shippingRate = await shippingGet(shippingRateId);
-
-	if (shippingRate) {
-		cart.shippingRate = shippingRate;
-		if (!cart.cart.metadata) cart.cart.metadata = {};
-		cart.cart.metadata.shippingRateId = shippingRateId;
-
-		// Update cart total
-		cart.cart.amount = calculateCartTotalPossiblyWithTax(cart);
-	}
-
-	mockCarts.set(cartId, cart);
-
-	return cart.cart;
 };

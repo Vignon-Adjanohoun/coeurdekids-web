@@ -26,5 +26,6 @@
 	},
 	"[typescript]": {
 		"editor.defaultFormatter": "esbenp.prettier-vscode"
-	}
+	},
+	"cSpell.words": ["Colour"]
 }
