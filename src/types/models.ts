@@ -22,12 +22,11 @@ export interface Product {
 	object: string;
 	active: boolean;
 	created: number;
-	deleted?: void;
+	updated: number;
 	description: string | null;
 	images: Array<string>;
 	livemode: boolean;
 	name: string;
-	updated: number;
 	marketing_features: string[];
 	default_price: {
 		unit_amount: number;
@@ -45,6 +44,7 @@ export interface Product {
 		order?: number;
 		variant?: string;
 		size?: string;
+		size_description?: string;
 		digitalAsset?: string;
 		preview?: string;
 		brand?: string;

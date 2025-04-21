@@ -1,6 +1,24 @@
+import { db } from "@/lib/firebase";
 import PersistentCartStorage from "@/lib/persistent-cart-storage";
 import type { Account, Cart, CartLine, Product } from "@/types/models";
-import type Stripe from "stripe";
+import {
+	type DocumentData,
+	type QueryDocumentSnapshot,
+	Timestamp,
+	addDoc,
+	collection,
+	deleteDoc,
+	doc,
+	getDoc,
+	getDocs,
+	limit,
+	orderBy,
+	query,
+	startAfter,
+	startAt,
+	updateDoc,
+	where,
+} from "firebase/firestore";
 
 // Create the persistent cart storage instance
 const mockCarts = PersistentCartStorage.getInstance();
@@ -31,7 +49,35 @@ export const accountGet = async (): Promise<{
 	};
 };
 
-// Product browse function with proper typing
+// Function to convert Firestore document to Product type
+const convertToProduct = (doc: QueryDocumentSnapshot<DocumentData>): Product => {
+	const data = doc.data();
+	return {
+		id: doc.id,
+		object: "product",
+		active: data.active,
+		created: data.created?.seconds || Math.floor(Date.now() / 1000),
+		description: data.description,
+		images: data.images
+			? data.images.map((img: string) => process.env.NEXT_PUBLIC_BUCKET_PRODUCT_IMAGE + img)
+			: [],
+		livemode: data.livemode || false,
+		name: data.name,
+		updated: data.updated?.seconds || Math.floor(Date.now() / 1000),
+		marketing_features: data.marketing_features || [],
+		default_price: {
+			id: `price_${doc.id}`,
+			object: "price",
+			unit_amount: data.price || 0,
+			currency: "ghs", //GH¢
+			product: doc.id,
+			type: "one_time",
+		},
+		metadata: data.metadata || {},
+	};
+};
+
+// Product browse function with Firebase integration
 export const productBrowse = async (
 	params: {
 		first?: number;
@@ -39,287 +85,88 @@ export const productBrowse = async (
 		offset?: number;
 		filter?: {
 			category?: string;
+			search?: string;
+			priceMin?: number;
+			priceMax?: number;
+			brand?: string;
 		};
+		sort?: {
+			field: string;
+			direction: "asc" | "desc";
+		};
+		cursor?: unknown[];
 	} = {},
 ): Promise<Product[]> => {
-	const { first = 10, last, offset = 0, filter = {} } = params;
+	try {
+		const {
+			first = 10,
+			offset = 0,
+			filter = {},
+			sort = { field: "created", direction: "desc" as const },
+			cursor,
+		} = params;
 
-	const allProducts = [
-		{
-			id: "prod-1",
-			object: "product",
-			group: "group-1",
-			color: "white",
-			active: true,
-			created: 1709937600,
-			name: "Kid's T-Shirt",
-			description: "Comfortable cotton t-shirt for kids",
-			images: [
-				"https://image.hm.com/assets/hm/19/ef/19ef2c4d9365179b2f09b6a20acfb0b42c807055.jpg?imwidth=820",
-				"https://image.hm.com/assets/hm/c6/1c/c61c28482cfa5d4389205ee0a0d1115e9de67d8e.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-tshirt",
-				stock: 25,
-				category: "girl",
-				order: 1,
-				brand: "H&M",
-				variant: "white",
-				size: "5M - 10M",
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_1234",
-				object: "price",
-				unit_amount: 1999,
-				currency: "ghs",
-				product: "prod-1",
-				type: "one_time",
-			},
-			marketing_features: ["New", "Bestseller"],
-		},
-		{
-			id: "prod-2",
-			object: "product",
-			group: "group-1",
-			color: "red",
-			active: true,
-			created: 1709937600,
-			name: "Kid's Jeans",
-			description: "Durable jeans for active kids",
-			images: [
-				"https://image.hm.com/assets/hm/1f/68/1f6887ba683faed4237de1212e87a056bd105468.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-tshirt",
-				stock: 15,
-				category: "girl",
-				order: 2,
-				brand: "NEXT",
-				variant: "red",
-				size: "10M",
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_2345",
-				object: "price",
-				unit_amount: 2999,
-				currency: "ghs",
-				product: "prod-2",
-				type: "one_time",
-			},
-			marketing_features: [],
-		},
-		{
-			id: "prod-3",
-			object: "product",
-			group: "group-2",
-			active: true,
-			created: 1709937600,
-			name: "Kid's Sneakers",
-			description: "Comfortable and stylish sneakers",
-			images: [
-				"https://image.hm.com/assets/hm/c4/40/c440911d28f2ef6be761639fcd50fb687b008eba.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-tshirt",
-				stock: 10,
-				category: "girl",
-				order: 3,
-				variant: "blue",
-				size: "5M",
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_3456",
-				object: "price",
-				unit_amount: 3499,
-				currency: "ghs",
-				product: "prod-3",
-				type: "one_time",
-			},
-			marketing_features: ["New"],
-		},
-		{
-			id: "prod-4",
-			object: "product",
-			active: true,
-			created: 1709937600,
-			name: "Kid's Jacket",
-			description: "Warm jacket for cold weather",
-			images: [
-				"https://image.hm.com/assets/hm/19/ef/19ef2c4d9365179b2f09b6a20acfb0b42c807055.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-tshirt",
-				stock: 8,
-				category: "girl",
-				order: 4,
-				brand: "Carter's",
-				variant: "blue",
-				size: "8M",
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_4567",
-				object: "price",
-				unit_amount: 4999,
-				currency: "ghs",
-				product: "prod-4",
-				type: "one_time",
-			},
-			marketing_features: ["Seasonal"],
-		},
-		{
-			id: "prod-5",
-			object: "product",
-			active: true,
-			created: 1709937600,
-			name: "Kid's Hat",
-			description: "Cute hat to protect from sun",
-			images: [
-				"https://image.hm.com/assets/hm/19/ef/19ef2c4d9365179b2f09b6a20acfb0b42c807055.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-hat",
-				stock: 20,
-				category: "girl",
-				order: 5,
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_5678",
-				object: "price",
-				unit_amount: 1499,
-				currency: "ghs",
-				product: "prod-5",
-				type: "one_time",
-			},
-			marketing_features: [],
-		},
-		{
-			id: "prod-6",
-			object: "product",
-			active: true,
-			created: 1709937600,
-			name: "Kid's Backpack",
-			description: "Colorful backpack for school",
-			images: [
-				"https://image.hm.com/assets/hm/19/ef/19ef2c4d9365179b2f09b6a20acfb0b42c807055.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-backpack",
-				stock: 12,
-				category: "accessories",
-				order: 6,
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_6789",
-				object: "price",
-				unit_amount: 2499,
-				currency: "ghs",
-				product: "prod-6",
-				type: "one_time",
-			},
-			marketing_features: ["Bestseller"],
-		},
-		{
-			id: "prod-7",
-			object: "product",
-			active: true,
-			created: 1709937600,
-			name: "Kid's Socks",
-			description: "Pack of 5 colorful socks",
-			images: [
-				"https://image.hm.com/assets/hm/19/ef/19ef2c4d9365179b2f09b6a20acfb0b42c807055.jpg?imwidth=820",
-			],
-			livemode: false,
-			metadata: {
-				slug: "kids-socks",
-				stock: 30,
-				category: "accessories",
-				order: 7,
-			},
-			package_dimensions: null,
-			shippable: true,
-			statement_descriptor: null,
-			tax_code: null,
-			type: "good",
-			unit_label: null,
-			updated: 1709937600,
-			url: null,
-			default_price: {
-				id: "price_7890",
-				object: "price",
-				unit_amount: 999,
-				currency: "ghs",
-				product: "prod-7",
-				type: "one_time",
-			},
-			marketing_features: ["Bestseller"],
-		},
-	];
+		const productsCollection = collection(db, "products");
+		let q = query(productsCollection);
 
-	// Apply category filter if provided
-	let filteredProducts = allProducts;
-	if (filter.category) {
-		filteredProducts = allProducts.filter((product) => product.metadata.category === filter.category);
-	}
+		// Apply filters
+		if (filter.category) {
+			q = query(q, where("metadata.category", "==", filter.category));
+		}
 
-	// Apply pagination
-	if (last) {
-		return filteredProducts.slice(-last);
-	} else {
-		return filteredProducts.slice(offset, offset + first);
+		if (filter.brand) {
+			q = query(q, where("metadata.brand", "==", filter.brand));
+		}
+
+		if (filter.priceMin !== undefined) {
+			q = query(q, where("price", ">=", filter.priceMin));
+		}
+
+		if (filter.priceMax !== undefined) {
+			q = query(q, where("price", "<=", filter.priceMax));
+		}
+
+		// Apply sorting
+		q = query(q, orderBy(sort.field, sort.direction));
+
+		// Apply pagination
+		q = query(q, limit(first));
+
+		if (cursor) {
+			q = query(q, startAfter(cursor));
+		} else if (offset > 0) {
+			// For initial offset without cursor
+			q = query(q, startAt(offset));
+		}
+
+		const querySnapshot = await getDocs(q);
+
+		let products: Product[] = [];
+
+		querySnapshot.forEach((doc) => {
+			products.push(convertToProduct(doc));
+		});
+
+		// Apply search filter client-side if provided
+		if (filter.search && filter.search.trim() !== "") {
+			const searchTerm = filter.search.toLowerCase();
+			products = products.filter(
+				(product) =>
+					product.name.toLowerCase().includes(searchTerm) ||
+					product.description?.toLowerCase().includes(searchTerm) ||
+					product.metadata.brand?.toLowerCase().includes(searchTerm),
+			);
+		}
+
+		// Apply last parameter if provided
+		if (params.last) {
+			return products.slice(-params.last);
+		}
+
+		return products;
+	} catch (error) {
+		console.error("Error fetching products from Firebase:", error);
+		return [];
 	}
 };
 
@@ -331,16 +178,67 @@ export const productList = async () => {
 	};
 };
 
-// Mock product by ID
+// Get product by ID from Firebase
 export const productGetById = async (id: string) => {
-	const allProducts = await productBrowse({ first: 100 });
-	return allProducts.find((product) => product.id === id) || null;
+	try {
+		const docRef = doc(db, "products", id);
+		const docSnap = await getDoc(docRef);
+
+		if (docSnap.exists()) {
+			return convertToProduct(docSnap);
+		} else {
+			return null;
+		}
+	} catch (error) {
+		console.error("Error getting product by ID from Firebase:", error);
+		return null;
+	}
 };
 
-// Mock product by slug
+// Get product by slug from Firebase
 export const productGet = async ({ slug }: { slug: string }): Promise<Product[]> => {
-	const allProducts = await productBrowse({ first: 100 });
-	return allProducts.filter((product) => product.metadata.slug === slug);
+	try {
+		const productsCollection = collection(db, "products");
+		const q = query(productsCollection, where("metadata.slug", "==", slug));
+		const querySnapshot = await getDocs(q);
+
+		const products: Product[] = [];
+		querySnapshot.forEach((doc) => {
+			products.push(convertToProduct(doc));
+		});
+
+		return products;
+	} catch (error) {
+		console.error("Error getting product by slug from Firebase:", error);
+		return [];
+	}
+};
+
+// Get categories from Firebase
+export const categoryBrowse = async (): Promise<string[]> => {
+	try {
+		const productsCollection = collection(db, "products");
+		const querySnapshot = await getDocs(productsCollection);
+
+		const categories = new Set<string>();
+
+		querySnapshot.forEach((doc) => {
+			const data = doc.data();
+			if (data.metadata?.category) {
+				categories.add(data.metadata.category);
+			}
+
+			// Also add from categories array if available
+			if (data.metadata?.categories && Array.isArray(data.metadata.categories)) {
+				data.metadata.categories.forEach((cat: string) => categories.add(cat));
+			}
+		});
+
+		return Array.from(categories);
+	} catch (error) {
+		console.error("Error fetching categories from Firebase:", error);
+		return ["baby", "girl", "boy", "shoes", "teen", "accessories", "tops", "bottoms", "dress"];
+	}
 };
 
 // Mock cart creation
@@ -354,7 +252,7 @@ export const cartCreate = async ({
 			object: "cart",
 			amount: 0,
 			currency: "ghs",
-			status: "requires_payment_method",
+			status: "processing",
 			created_at: Date.now() / 1000,
 			metadata: {},
 			payment_method: null,
@@ -442,39 +340,6 @@ export const cartAdd = async ({
 
 	return cart;
 };
-
-// Mock cart add optimistic
-// export const cartAddOptimistic = async ({ cart, add }: {
-// 	cart?: Cart | null;
-// 	add: string | undefined;
-// }): Promise<Cart | null | undefined> => {
-// 	if (!add || !cart) return cart;
-
-// 	const productId = add;
-// 	const product = await productGetById(productId);
-
-// 	if (!product) return cart;
-
-// 	// Create a copy of the cart to avoid mutating the original
-// 	const newCart = JSON.parse(JSON.stringify(cart)) as Cart;
-
-// 	// Check if product already exists in cart
-// 	const existingLineIndex = newCart.lines.findIndex((line) => line.product.id === productId);
-
-// 	if (existingLineIndex !== -1 && newCart.lines[existingLineIndex]) {
-// 		newCart.lines[existingLineIndex].quantity += 1;
-// 	} else {
-// 		newCart.lines.push({
-// 			product,
-// 			quantity: 1,
-// 		});
-// 	}
-
-// 	// Update cart total
-// 	newCart.cart.amount = calculateCartTotalPossiblyWithTax(newCart);
-
-// 	return newCart;
-// };
 
 // Mock cart change quantity
 export const cartChangeQuantity = async ({
@@ -605,11 +470,6 @@ export const cartSaveShippingAddress = async ({
 
 	await cartSet(cartId, cart);
 	return cart;
-};
-
-// Mock category list
-export const categoryBrowse = async (): Promise<string[]> => {
-	return ["baby", "girl", "boy", "shoes", "teen", "accessories", "tops", "bottoms", "dress"];
 };
 
 // Calculate cart total with possible tax
