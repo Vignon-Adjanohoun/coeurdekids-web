@@ -57,7 +57,7 @@ export function ShippingAddressForm({
 
 	const [addressValues, setAddressValues] = useState<AddressSchema>({
 		name: initialAddress?.name || "",
-		email: initialAddress?.email || "",
+		email: initialAddress?.email || undefined,
 		city: initialAddress?.city || "Accra",
 		country: initialAddress?.country || "Ghana",
 		line1: initialAddress?.line1 || "",

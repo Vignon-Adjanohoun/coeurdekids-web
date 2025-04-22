@@ -15,9 +15,10 @@ export const getAddressSchema = (tr: {
 		line2: string().optional().nullable().default(""),
 		postalCode: string().optional().nullable().default(""),
 		state: string().optional().nullable().default(""),
-		phone: string().optional().nullable().default(""),
+		phone: string().min(1, "Phone is required"),
 		taxId: string().optional().nullable().default(""),
-		email: string().email("Email is required"),
+		email: string().email("Invalid email format").optional(),
+		// email: string().email("Email is required"),
 	});
 	return addressSchema;
 };

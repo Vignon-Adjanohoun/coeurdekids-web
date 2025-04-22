@@ -1,5 +1,4 @@
 import { db } from "@/lib/firebase";
-import PersistentCartStorage from "@/lib/persistent-cart-storage";
 import type { Account, Cart, CartLine, Product } from "@/types/models";
 import {
 	type DocumentData,
@@ -14,14 +13,12 @@ import {
 	limit,
 	orderBy,
 	query,
+	setDoc,
 	startAfter,
 	startAt,
 	updateDoc,
 	where,
 } from "firebase/firestore";
-
-// Create the persistent cart storage instance
-const mockCarts = PersistentCartStorage.getInstance();
 
 // Mock account data
 export const accountGet = async (): Promise<{
@@ -68,12 +65,41 @@ const convertToProduct = (doc: QueryDocumentSnapshot<DocumentData>): Product => 
 		default_price: {
 			id: `price_${doc.id}`,
 			object: "price",
-			unit_amount: data.price || 0,
+			unit_amount: data.price ? data.price * 100 : 0,
 			currency: "ghs", //GH¢
 			product: doc.id,
 			type: "one_time",
 		},
 		metadata: data.metadata || {},
+	};
+};
+
+// Function to convert Firestore document to Cart type
+const convertToCart = (docId: string, data: DocumentData): Cart => {
+	return {
+		id: docId,
+		status: data.status || "processing",
+		created: data.created?.seconds || Math.floor(Date.now() / 1000),
+		updated: data.updated?.seconds || Math.floor(Date.now() / 1000),
+		canceled_at: data.canceled_at?.seconds || null,
+		cancellation_reason: data.cancellation_reason || null,
+		trackingNumber: data.trackingNumber || null,
+		cart: data.cart || {
+			object: "cart",
+			amount: 0,
+			currency: "ghs",
+			metadata: {},
+			payment_method: null,
+			customer: null,
+			description: null,
+			invoice: null,
+			statement_descriptor: null,
+			statement_descriptor_suffix: null,
+			taxBreakdown: [],
+		},
+		lines: data.lines || [],
+		shippingRate: data.shippingRate || null,
+		shippingAddress: data.shippingAddress || null,
 	};
 };
 
@@ -240,17 +266,18 @@ export const cartCreate = async ({
 	const cartId = `cart_${Math.random().toString(36).substring(2, 15)}`;
 	const cart: Cart = {
 		id: cartId,
+		status: "processing",
+		created: Date.now() / 1000,
+		updated: Date.now() / 1000,
+		canceled_at: null,
+		cancellation_reason: null,
 		cart: {
 			object: "cart",
 			amount: 0,
 			currency: "ghs",
-			status: "processing",
-			created_at: Date.now() / 1000,
 			metadata: {},
 			payment_method: null,
 			customer: null,
-			canceled_at: null,
-			cancellation_reason: null,
 			description: null,
 			invoice: null,
 			statement_descriptor: null,
@@ -260,7 +287,7 @@ export const cartCreate = async ({
 		lines: [],
 	};
 
-	await cartSet(cartId, cart);
+	await cartSave(cartId, cart);
 
 	if (productId) {
 		await cartAdd({ productId, cartId });
@@ -269,26 +296,94 @@ export const cartCreate = async ({
 	return cart;
 };
 
-// Mock cart get
+// Get cart by ID from Firebase
 export const cartGet = async (cartId: string): Promise<Cart | null> => {
-	return mockCarts.get(cartId) || null;
+	try {
+		const docRef = doc(db, "orders", cartId);
+		const docSnap = await getDoc(docRef);
+
+		if (docSnap.exists()) {
+			return convertToCart(docSnap.id, docSnap.data());
+		}
+
+		return null;
+	} catch (error) {
+		console.error("Error getting cart from Firebase:", error);
+		return null;
+	}
 };
 
-// Mock cart get
+// Get cart by tracking number from Firebase
 export const cartGetByTracking = async (trackingNumber: string): Promise<Cart | null> => {
-	// Get all carts from the storage
-	const allCarts = mockCarts.getAllCarts();
+	try {
+		const ordersCollection = collection(db, "orders");
+		const q = query(ordersCollection, where("trackingNumber", "==", trackingNumber));
+		const querySnapshot = await getDocs(q);
 
-	// Find the cart that matches the tracking number
-	const foundCart = allCarts.find((cart) => cart.trackingNumber === trackingNumber);
+		if (querySnapshot.empty) {
+			return null;
+		}
 
-	return foundCart || null;
+		const docSnap = querySnapshot.docs[0];
+		if (docSnap) {
+			return convertToCart(docSnap.id, docSnap.data());
+		}
+		return null;
+	} catch (error) {
+		console.error("Error getting cart by tracking number from Firebase:", error);
+		return null;
+	}
 };
 
-// Mock cart set
-export const cartSet = async (cartId: string, cart: Cart): Promise<boolean> => {
-	mockCarts.set(cartId, cart);
-	return true;
+// Save cart to Firebase
+export const cartSave = async (cartId: string, cart: Cart): Promise<boolean> => {
+	try {
+		const docRef = doc(db, "orders", cartId);
+
+		// Helper function to remove undefined values
+		const removeUndefined = (obj: Record<string, unknown>): Record<string, unknown> => {
+			const result: Record<string, unknown> = {};
+
+			Object.keys(obj).forEach((key) => {
+				// Skip undefined values
+				if (obj[key] === undefined) return;
+
+				// Handle nested objects
+				if (obj[key] !== null && typeof obj[key] === "object" && !Array.isArray(obj[key])) {
+					result[key] = removeUndefined(obj[key] as Record<string, unknown>);
+				} else {
+					result[key] = obj[key];
+				}
+			});
+
+			return result;
+		};
+
+		// Clean the cart data by removing undefined values
+		const cleanedCart = removeUndefined(cart as unknown as Record<string, unknown>);
+
+		// Convert Timestamp objects for Firebase
+		const cartData = {
+			...cleanedCart,
+			created: Timestamp.fromMillis(cart.created * 1000),
+			updated: Timestamp.fromMillis(Date.now()),
+			canceled_at: cart.canceled_at ? Timestamp.fromMillis(cart.canceled_at * 1000) : null,
+		};
+
+		// Check if document exists
+		const docSnap = await getDoc(docRef);
+
+		if (docSnap.exists()) {
+			await updateDoc(docRef, cartData);
+		} else {
+			await setDoc(docRef, cartData);
+		}
+
+		return true;
+	} catch (error) {
+		console.error("Error saving cart to Firebase:", error);
+		return false;
+	}
 };
 
 // Mock cart add
@@ -327,7 +422,7 @@ export const cartAdd = async ({
 		// Update cart total
 		cart.cart.amount = calculateCartTotalPossiblyWithTax(cart);
 
-		await cartSet(cartId, cart);
+		await cartSave(cartId, cart);
 	}
 
 	return cart;
@@ -373,7 +468,7 @@ export const cartChangeQuantity = async ({
 		delete cart.cart.metadata.taxCalculationExp;
 	}
 
-	await cartSet(cartId, cart);
+	await cartSave(cartId, cart);
 
 	return cart;
 };
@@ -406,7 +501,7 @@ export const cartSetQuantity = async ({
 	// Update cart total
 	cart.cart.amount = calculateCartTotalPossiblyWithTax(cart);
 
-	await cartSet(cartId, cart);
+	await cartSave(cartId, cart);
 
 	return cart;
 };
@@ -456,11 +551,11 @@ export const cartSaveShippingAddress = async ({
 		state: shippingAddress.state,
 	};
 
-	cart.cart.status = "submitted";
+	cart.status = "submitted";
 	const randomNumber = Math.floor(1000000000 + Math.random() * 9000000000);
 	cart.trackingNumber = randomNumber.toString();
 
-	await cartSet(cartId, cart);
+	await cartSave(cartId, cart);
 	return cart;
 };
 

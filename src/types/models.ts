@@ -66,6 +66,11 @@ export interface User {
 export interface Cart {
 	id: string;
 	trackingNumber?: string;
+	status: CartStatus;
+	canceled_at: number | null;
+	cancellation_reason: string | null;
+	created: number;
+	updated: number;
 	cart: {
 		object: "cart";
 		metadata: {
@@ -89,15 +94,11 @@ export interface Cart {
 			taxType: string;
 		}[];
 		amount: number;
-		canceled_at: number | null;
-		cancellation_reason: string | null;
-		created_at: number;
 		currency: string;
 		description: string | null;
 		invoice: string | null;
 		statement_descriptor: string | null;
 		statement_descriptor_suffix: string | null;
-		status: CartStatus;
 	};
 	lines: CartLine[];
 	shippingRate?: { fixed_amount?: { amount?: number } } | null;

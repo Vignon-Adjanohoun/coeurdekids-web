@@ -249,7 +249,7 @@ export default async function SingleProductPage(props: {
 							<div className="grid gap-2 mt-4">
 								<p className="text-base font-medium" id="size-label">
 									<span className="uppercase">{t("sizeTitle") || "Size"}: </span>
-									<span className="">{selectedSize || ""}</span>
+									<span className="">{selectedProduct.metadata.size_description || selectedSize || ""}</span>
 								</p>
 								<ul role="list" className="grid grid-cols-4 gap-2" aria-labelledby="size-label">
 									{availableSizes.map((size) => {

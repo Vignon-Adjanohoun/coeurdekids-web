@@ -68,7 +68,7 @@ export default async function OrderDetailsPage(props: {
 							{order.trackingNumber}
 						</Badge>
 					</div>
-					<OrderStatus status={order.cart.status} />
+					<OrderStatus status={order.status} />
 				</div>
 			</div>
 
@@ -141,7 +141,9 @@ export default async function OrderDetailsPage(props: {
 													{line.product.metadata.size && (
 														<>
 															<span className="mx-2">•</span>
-															<span>Size: {line.product.metadata.size}</span>
+															<span>
+																Size: {line.product.metadata.size_description || line.product.metadata.size}
+															</span>
 														</>
 													)}
 												</div>

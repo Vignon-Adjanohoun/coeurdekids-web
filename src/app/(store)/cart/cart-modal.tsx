@@ -70,7 +70,9 @@ export async function CartModalPage() {
 								<div className="justify-between self-end ">
 									{line.product.metadata.size && (
 										<p className="text-sm font-medium text-muted-foreground">
-											{t("size", { size: line.product.metadata.size })}
+											{t("size", {
+												size: line.product.metadata.size_description || line.product.metadata.size,
+											})}
 										</p>
 									)}
 									<p className="text-sm font-medium text-muted-foreground">
