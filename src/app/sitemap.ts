@@ -1,6 +1,6 @@
 import { publicUrl } from "@/env.mjs";
+import * as Commerce from "@/lib/commerce-lib";
 import StoreConfig from "@/store.config";
-import * as Commerce from "commerce-kit";
 import type { MetadataRoute } from "next";
 
 type Item = MetadataRoute.Sitemap[number];

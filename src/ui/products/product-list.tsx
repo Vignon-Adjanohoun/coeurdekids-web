@@ -3,7 +3,6 @@ import { formatMoney } from "@/lib/utils";
 import type { Product } from "@/types/models";
 import { JsonLd, mappedProductsToJsonLd } from "@/ui/json-ld";
 import { YnsLink } from "@/ui/yns-link";
-import type * as Commerce from "commerce-kit";
 import Image from "next/image";
 
 export const ProductList = async ({

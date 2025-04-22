@@ -1,6 +1,6 @@
 import { getLocale } from "@/i18n/server";
+import { accountGet, productGet } from "@/lib/commerce-lib";
 import { formatMoney } from "@/lib/utils";
-import { accountGet, productGet } from "commerce-kit";
 import { ImageResponse } from "next/og";
 
 export const size = {

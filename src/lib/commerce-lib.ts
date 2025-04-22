@@ -143,9 +143,9 @@ export const productBrowse = async (
 
 		let products: Product[] = [];
 
-		querySnapshot.forEach((doc) => {
+		for (const doc of querySnapshot.docs) {
 			products.push(convertToProduct(doc));
-		});
+		}
 
 		// Apply search filter client-side if provided
 		if (filter.search && filter.search.trim() !== "") {
@@ -168,14 +168,6 @@ export const productBrowse = async (
 		console.error("Error fetching products from Firebase:", error);
 		return [];
 	}
-};
-
-// Mock product list with proper typing
-export const productList = async () => {
-	const products = await productBrowse({ first: 10 });
-	return {
-		data: products,
-	};
 };
 
 // Get product by ID from Firebase

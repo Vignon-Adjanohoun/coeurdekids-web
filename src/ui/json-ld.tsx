@@ -1,6 +1,5 @@
 import { formatProductName } from "@/lib/utils";
-import type { Account } from "@/types/models";
-import type * as Commerce from "commerce-kit";
+import type * as Model from "@/types/models";
 import { getDecimalFromStripeAmount } from "commerce-kit/currencies";
 import type { ItemList, Product, Thing, WebSite, WithContext } from "schema-dts";
 
@@ -8,7 +7,7 @@ export const JsonLd = <T extends Thing>({ jsonLd }: { jsonLd: WithContext<T> }) 
 	return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
 };
 
-export const mappedProductToJsonLd = (product: Commerce.MappedProduct): WithContext<Product> => {
+export const mappedProductToJsonLd = (product: Model.Product): WithContext<Product> => {
 	const productName = formatProductName(product.name, product.metadata.variant);
 
 	return {
@@ -31,9 +30,7 @@ export const mappedProductToJsonLd = (product: Commerce.MappedProduct): WithCont
 	};
 };
 
-export const mappedProductsToJsonLd = (
-	products: readonly Commerce.MappedProduct[],
-): WithContext<ItemList> => {
+export const mappedProductsToJsonLd = (products: readonly Model.Product[]): WithContext<ItemList> => {
 	return {
 		"@context": "https://schema.org",
 		"@type": "ItemList",
@@ -45,7 +42,7 @@ export const accountToWebsiteJsonLd = ({
 	account,
 	logoUrl,
 }: {
-	account: Account | null | undefined;
+	account: Model.Account | null | undefined;
 	logoUrl: string | null | undefined;
 }): WithContext<WebSite> => {
 	return {
